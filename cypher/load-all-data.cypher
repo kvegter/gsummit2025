@@ -40,7 +40,7 @@ CREATE INDEX index_OperationalPoint_name IF NOT EXISTS FOR (op:OperationalPoint)
 //
 // Loading Operational Points
 //
-LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/data/OperationalPoint_All.csv" AS row
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/kvegter/gsummit2025/refs/heads/main/data/OperationalPoint_All.csv" AS row
 //This WITH is to ensure our data is as normalized as we can
 WITH
     trim(row.id) AS id, //trim will remove and start and trailing spaces from an ID
@@ -60,7 +60,7 @@ RETURN DISTINCT 'Complete';
 //
 // Load Section Length Data
 //
-LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/data/SECTION_ALL_Length.csv" AS row
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/kvegter/gsummit2025/refs/heads/main/data/SECTION_ALL_Length.csv" AS row
 WITH
     trim(row.source) AS sourceId,
     trim(row.target) AS targetId,
@@ -73,7 +73,7 @@ SET s.sectionlength = length;
 //
 // Load Speed Data
 //
-LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/data/SECTION_ALL_Speed.csv" AS row
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/kvegter/gsummit2025/refs/heads/main/data/SECTION_ALL_Speed.csv" AS row
 WITH
     trim(row.source) AS sourceId,
     trim(row.target) AS targetId,
@@ -86,7 +86,7 @@ SET s.speed = speed;
 //
 // Load Point of Interest data
 //
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/data/POIs.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/kvegter/gsummit2025/refs/heads/main/data/POIs.csv' AS row
 WITH 
     row.CITY AS city,
     row.POI_DESCRIPTION AS description,
@@ -120,5 +120,33 @@ WITH
 ORDER BY distance
 WITH poi, COLLECT(op)[0] AS closest
 MERGE (closest)-[:IS_NEAR]->(poi);
+
+//
+//  Create the missing links and some properties
+//
+MATCH
+    (uk:UK:BorderPoint),
+    (france:France)
+WITH
+    uk, france,
+    point.distance(france.geolocation, uk.geolocation) as distance
+ORDER by distance LIMIT 1
+MERGE (france)-[:SECTION {sectionlength: distance/1000.0, curated: true}]->(uk);
+
+MATCH (s1:Station)-[s:SECTION]->(s2:Station)
+WHERE
+    NOT (s.speed IS NULL)
+    AND NOT (s.sectionlength IS NULL )
+WITH
+    s1.name AS startName, s2.name AS endName,
+    (s.sectionlength / s.speed) * 60 * 60 AS timeTakenInSeconds
+    LIMIT 1
+RETURN startName, endName, timeTakenInSeconds;
+
+MATCH (:OperationalPoint)-[r:SECTION]->(:OperationalPoint)
+WHERE
+    r.speed IS NOT NULL
+    AND r.sectionlength IS NOT NULL
+SET r.traveltime = (r.sectionlength / r.speed) * 60 * 60;
 
 // ==== DONE LOADING ====

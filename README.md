@@ -92,6 +92,24 @@ The following high level steps are required, to build the demo environment (ther
 The model shows that we have an `OperationalPoint` Node that is connected to itself with a `SECTION` relationship. This means, `OperationalPoint`s are connected together and make up the rail network .
 
 ---
+## Neodash
+
+use https://neodash.graphapps.io to open the Dashboard
+
+### First Component
+
+Show a list of countries. Use this cypher statement:
+```cypher
+MATCH (op:OperationalPoint)
+RETURN op
+LIMIT 10;
+```
+
+### Using parameters
+
+Enable Report Actions in the extensions screen. you can access that via the 'puzzle' icon on the top right
+
+
 
 ## Run some Cypher queries on your Graph
 
