@@ -78,16 +78,16 @@ The following high level steps are required, to build the demo environment (ther
 
 1. Create a Neo4j Graph instance via any of:
 
-   1. [Neo4j Aura](https://neo4j.com/cloud/aura-free/)
+   1. [Neo4j Aura](https://neo4j.com/product/auradb/), You can use AuraDB Free or AuraDB Professional wich has a 14 days free trial
    2. [Neo4j Desktop](https://neo4j.com/download-center/)
       - If you are using Neo4j Desktop, you will need to ensure that APOC is added to any graph you create. Installation instructions can be found [here](https://neo4j.com/docs/desktop-manual/current/).
    3. [Neo4j Sandbox](https://sandbox.neo4j.com/) use a "Blank Sandbox"
 
-2. Open Neo4j Browser and run the [`load-all-data.cypher`](https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/cypher/load-all-data.cypher) script from the code directory above. You can copy & paste the complete code into the Neo4j Browser query window.
+2. Open Neo4j Browser and run the [`load-all-data.cypher`](https://github.com/kvegter/gsummit2025/blob/main/cypher/load-all-data.cypher) script from the code directory above. You can copy & paste the complete code into the Neo4j Browser query window.
 
 3. After the script has finished loading, you can check your data model. Run the command `CALL apoc.meta.subGraph({labels:['OperationalPoint', 'POI']})` in your Browser query window. It should look like the following (maybe yours is a bit more mixed up):
 
-<img width="800" alt="Data Model - Digital Twin" src="https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/images/Model.svg">
+<img width="800" alt="Data Model - Digital Twin" src="https://raw.githubusercontent.com/kvegter/gsummit2025/refs/heads/main/images/Model.svg">
 
 The model shows that we have an `OperationalPoint` Node that is connected to itself with a `SECTION` relationship. This means, `OperationalPoint`s are connected together and make up the rail network .
 
@@ -339,7 +339,7 @@ WHERE
 SET r.traveltime = (r.sectionlength / r.speed) * 60 * 60
 ```
 
-> **IMPORTANT** To be able to use the [NeoDash dashboard](https://raw.githubusercontent.com/neo4j-field/gsummit2024/main/dashboards/digital-twin_dashboard.json) in this repository fully, you will need to execute this query.
+The queries above are also in the load-all-data.cypher file which are already executed when we started.  
 
 ## Shortest Path Queries using different Shortest Path functions in Neo4j
 
@@ -383,9 +383,9 @@ RETURN length(path), weight;
 
 ## NeoDash
 
-Everything we've done so far has been within the development tooling of Neo4j, but for our product owners to see the benefits, we probably don't want to show a lot of Cypher.
+During this workshop we created the first steps for creating a dashboard
 
-From here, we're going to go to [NeoDash](dashboards/README.md) to take our model into something usable for those of us who don't want to code.
+_Optional_:From here, you can go to  [NeoDash](dashboards/README.md) to take our model into something usable for those of us who don't want to code.
 
 ## Graph Data Science (GDS)
 

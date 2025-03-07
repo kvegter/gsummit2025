@@ -2,9 +2,9 @@
 
 This file gives some advice on how to use GDS with the dataset.
 
-> **NB** to use GDS you will need to be either using Sandbox OR Desktop environments, Aura Free will not allow access.
+> **NB** to use GDS you will need to be either using Aura Professional (trial), The provided training database OR Desktop environments, Aura Free will not allow GDS access.
 
-We will be projecting a graph into the GDS [Graph Catalog](https://neo4j.com/docs/graph-data-science/current/management-ops/graph-catalog-ops/) using [Native Projection](https://neo4j.com/docs/graph-data-science/current/management-ops/projections/graph-project/) 
+We will be projecting a graph into the GDS [Graph Catalog](https://neo4j.com/docs/graph-data-science/current/management-ops/#_catalog_operations) using [Native Projection](https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-project/) 
 
 If you want to ensure you have no existing projections you can run the following Cypher to clear your Graph Catalog:
 
@@ -33,30 +33,30 @@ We can calculate the shortest path between two stations - for example, Malmö Ce
 
 ```cypher
 MATCH     
-    (:OperationalPointName {name:'Stockholms central'})<-[:NAMED]-(stockholm:OperationalPoint),
-    (:OperationalPointName {name:'Malmö central'})<-[:NAMED]-(malmo:OperationalPoint)
+    (stockholm:OperationalPoint {name:'Stockholms central'}),
+    (malmo:OperationalPoint {name:'Malmö central'})
 CALL gds.shortestPath.dijkstra.stream('OperationalPoints', {
     sourceNode: malmo,
     targetNode: stockholm,
     relationshipWeightProperty: 'traveltime'
 })
 YIELD index, sourceNode, targetNode, totalCost, nodeIds, costs, path
-RETURN *;
+RETURN index, sourceNode, targetNode, totalCost, nodeIds, costs, path, length(path);
 ```
 
 Do we get the same result if we use the `sectionlength` relationship property as our weight instead of `traveltime` when computing the shortest path?
 
 ```cypher
 MATCH     
-    (:OperationalPointName {name:'Stockholms central'})<-[:NAMED]-(stockholm:OperationalPoint),
-    (:OperationalPointName {name:'Malmö central'})<-[:NAMED]-(malmo:OperationalPoint)
+    (stockholm:OperationalPoint {name:'Stockholms central'}),
+    (malmo:OperationalPoint {name:'Malmö central'})
 CALL gds.shortestPath.dijkstra.stream('OperationalPoints', {
     sourceNode: malmo,
     targetNode: stockholm,
     relationshipWeightProperty: 'sectionlength'
 })
 YIELD index, sourceNode, targetNode, totalCost, nodeIds, costs, path
-RETURN *;
+RETURN index, sourceNode, targetNode, totalCost, nodeIds, costs, path, length(path);
 ```
 
 ### Community Detection
