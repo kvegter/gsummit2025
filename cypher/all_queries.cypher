@@ -4,7 +4,7 @@
 //
 
 // Show Operation Point Names and limit the number of returned OPs to 10:
-MATCH (opn:OperationalPointName) 
+MATCH (opn:OperationalPoint)
 RETURN opn 
 LIMIT 10;
 
@@ -19,7 +19,7 @@ WHERE NOT EXISTS ( (op)-[:SECTION]-() )
 RETURN COUNT(op);
 
 // Clean them from the database.
-MATCH (op:OperationalPoint)-[NAMED]->(opn:OperationalPointName)
+MATCH (op:OperationalPoint)
 WHERE NOT EXISTS ( (op)-[:SECTION]-() )
 DETACH DELETE op, opn
 
@@ -72,8 +72,8 @@ LIMIT 1
 
 // Or other routes we know should exist:
 MATCH 
-    (:OperationalPointName {name:'Stockholms central'})<-[:NAMED]-(stockholm:OperationalPoint),
-    (:OperationalPointName {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})<-[:NAMED]-(berlin:OperationalPoint)
+    (stockholm:OperationalPoint {name:'Stockholms central'}),
+    (berlin:OperationalPoint {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})
 WITH stockholm, berlin
 MATCH p= ((stockholm)-[:SECTION]-(berlin))
 RETURN p 
@@ -91,8 +91,8 @@ MERGE (germany)-[:SECTION {sectionlength: distance/1000.0, curated: true}]->(den
 
 // Nyborg / Hjulby Gap
 MATCH 
-    (:OperationalPointName {name: 'Nyborg'})<-[:NAMED]-(nyborg:OperationalPoint),
-    (:OperationalPointName {name: 'Hjulby'})<-[:NAMED]-(hjulby:OperationalPoint)-[:NAMED]->
+    (nyborg:OperationalPointName {name: 'Nyborg'}),
+    (hjulby:OperationalPointName {name: 'Hjulby'})
 MERGE (nyborg)-[:SECTION {sectionlength: point.distance(nyborg.geolocation, hjulby.geolocation)/1000.0, curated: true}]->(hjulby);
 
 //UK / France Border Gap
@@ -107,15 +107,16 @@ MERGE (france)-[:SECTION {sectionlength: distance/1000.0, curated: true}]->(uk);
 
 
 // Working out the travel time on a section dynamically:
-MATCH (o1:OperationalPointName)<-[:NAMED]-(s1:Station)-[s:SECTION]->(s2:Station)-[:NAMED]->(o2:OperationalPointName)
-WHERE 
-    NOT (s.speed IS NULL) 
+MATCH (s1:Station)-[s:SECTION]->(s2:Station)
+    WHERE
+    NOT (s.speed IS NULL)
     AND NOT (s.sectionlength IS NULL )
-WITH 
-    o1.name AS startName, o2.name AS endName,
-    (s.sectionlength / s.speed) * 60 * 60 AS timeTakenInSeconds
+WITH
+  s1.name AS startName, s2.name AS endName,
+  (s.sectionlength / s.speed) * 60 * 60 AS timeTakenInSeconds
     LIMIT 1
-RETURN startName, endName, timeTakenInSeconds
+RETURN startName, endName, timeTakenInSeconds;
+
 
 
 // Storing that on all the sections to reduce the need for calculations
@@ -126,26 +127,24 @@ WHERE
 SET r.traveltime = (r.sectionlength / r.speed) * 60 * 60
 
 // Now we can just do:
-MATCH (o1:OperationalPointName)<-[:NAMED]-(s1:Station)-[s:SECTION]->(s2:Station)-[:NAMED]->(o2:OperationalPointName)
+MATCH (s1:Station)-[s:SECTION]->(s2:Station)
 WHERE 
     NOT (s.speed IS NULL) 
     AND NOT (s.sectionlength IS NULL )
-RETURN o1.name AS startName, o2.name AS endName, s.traveltime AS timeTakenInSeconds
+RETURN s1.name AS startName, s2.name AS endName, s.traveltime AS timeTakenInSeconds
 
 // Shortest Path Queries using different Shortest Path functions in Neo4j
 
 // Cypher shortest path
-MATCH 
-    (:OperationalPointName {name:'Bruxelles-Midi | Brussel-Zuid'})<-[:NAMED]-(brussels:OperationalPoint),
-    (:OperationalPointName {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})<-[:NAMED]-(berlin:OperationalPoint)
+MATCH (brussels:OperationalPoint {name:'Bruxelles-Midi | Brussel-Zuid'}),
+      (berlin:OperationalPoint {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})
 WITH brussels, berlin
 MATCH path = shortestPath ( (brussels)-[:SECTION*]-(berlin) )
 RETURN path
 
 // APOC Dijkstra shortest path with weight sectionlength
-MATCH 
-    (:OperationalPointName {name:'Bruxelles-Midi | Brussel-Zuid'})<-[:NAMED]-(brussels:OperationalPoint),
-    (:OperationalPointName {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})<-[:NAMED]-(berlin:OperationalPoint)
+MATCH (brussels:OperationalPoint {name:'Bruxelles-Midi | Brussel-Zuid'}),
+      (berlin:OperationalPoint {name:'Berlin Hauptbahnhof - Lehrter Bahnhof'})
 WITH brussels, berlin
 CALL apoc.algo.dijkstra(brussels, berlin, 'SECTION', 'sectionlength') YIELD path, weight
 RETURN path, weight;
